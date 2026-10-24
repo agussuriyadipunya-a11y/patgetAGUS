@@ -1,0 +1,32 @@
+# Dependencies & Portable Tools
+.tools/
+node_modules/
+
+# Local Database & Storage
+data/
+*.db
+*.db-wal
+*.db-shm
+
+# Logs & OS metadata
+*.log
+.DS_Store
+Thumbs.db
+
+# Test & Temporary exports
+_test_*
+*.tmp
+
+# Environment & Secret files
+.env
+.env*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Firebase Service Account Credentials (Security hardening)
+*serviceAccountKey*.json
+*-adminsdk-*.json
+firebase-adminsdk*.json
+serviceAccountKey.json

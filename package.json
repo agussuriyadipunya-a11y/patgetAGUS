@@ -1,0 +1,24 @@
+{
+  "name": "payment-gateway-kiosk",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Aplikasi web Payment Gateway kiosk pembayaran (PLN, Telkomsel, XL, Internet, BPJS)",
+  "type": "module",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "6.7.24",
+    "exceljs": "4.4.0",
+    "express": "4.21.2",
+    "firebase-admin": "^14.5.0",
+    "pdfkit": "0.17.2",
+    "pino": "9.6.0",
+    "qrcode": "1.5.4"
+  }
+}
