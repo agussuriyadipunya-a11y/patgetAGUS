@@ -126,6 +126,8 @@
 
 .sim-chip { display: inline-flex; align-items: center; gap: 7px; padding: 6px 11px; border-radius: 99px; border: 1px solid color-mix(in srgb, var(--warning) 22%, transparent); background: var(--warning-soft); color: var(--warning); font-size: 0.65rem; font-weight: 800; letter-spacing: 0.08em; }
 .sim-chip i { width: 6px; height: 6px; border-radius: 50%; background: var(--warning); box-shadow: 0 0 0 3px color-mix(in srgb, var(--warning) 14%, transparent); }
+.sim-chip.live { border-color: color-mix(in srgb, var(--success) 22%, transparent); background: var(--success-soft); color: var(--success); }
+.sim-chip.live i { background: var(--success); box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 14%, transparent); }
 
 /* ---------- Tables ---------- */
 .table-wrap { width: 100%; overflow-x: auto; }

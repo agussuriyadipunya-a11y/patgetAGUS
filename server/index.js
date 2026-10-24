@@ -46,9 +46,6 @@ import { resetDatabase, deleteAllData, restoreFactoryDefaults } from "./maintena
 import { checkFirebaseStatus, syncToFirebase, broadcastCloudEvent } from "./firebase.js";
 
 ensureDefaultSettings();
-const seeded = seedDemoTransactions();
-seedDefaultCustomers();
-seedOfficeData();
 
 const app = express();
 app.disable("x-powered-by");
@@ -511,9 +508,8 @@ if (!process.env.VERCEL) {
     console.log(`  Kios      : ${settings.kioskName}`);
     console.log(`  Lokal     : http://localhost:${PORT}`);
     for (const ip of lanAddresses()) console.log(`  Jaringan  : http://${ip}:${PORT}`);
-    console.log(`  Mode      : ${SIMULATION_MODE ? "SIMULASI (data tagihan dihasilkan sistem)" : "PRODUKSI"}`);
+    console.log(`  Mode      : ${SIMULATION_MODE ? "SIMULASI" : "REALTIME (Produksi)"}`);
     console.log(`  Database  : data/payment-gateway.db`);
-    console.log(`  Seed      : ${seeded ? `${seeded} transaksi demo dibuat` : "data sudah tersedia"}`);
     console.log("  Login     : admin / admin123 (ubah di menu Pengaturan)");
     console.log("");
     whatsapp.init();

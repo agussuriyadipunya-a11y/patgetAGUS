@@ -6,7 +6,7 @@ export const state = {
   categories: [],
   paymentMethods: [],
   accents: [],
-  simulation: true,
+  simulation: false,
   meta: null,
   wa: null,
 };

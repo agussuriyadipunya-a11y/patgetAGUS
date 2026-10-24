@@ -228,7 +228,7 @@ function buildShell() {
         </nav>
 
         <div class="sidebar-foot">
-          ${state.simulation ? `<div class="sim-badge"><i></i> MODE SIMULASI</div>` : ""}
+          ${state.simulation ? `<div class="sim-badge"><i></i> MODE SIMULASI</div>` : `<div class="sim-badge live"><i></i> MODE REALTIME</div>`}
           <div class="user-card">
             <span class="avatar">${avatarText}</span>
             <span class="user-meta">

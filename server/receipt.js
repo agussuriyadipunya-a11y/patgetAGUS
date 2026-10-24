@@ -3,7 +3,7 @@ import QRCode from "qrcode";
 import { getSettings } from "./settings.js";
 import { formatDateTime, formatShortDate, rupiah } from "./util.js";
 
-export const SIMULATION_MODE = process.env.SIMULATION !== "false";
+export const SIMULATION_MODE = process.env.SIMULATION === "true";
 
 const RECEIPT_WIDTH = 226.77; // 80 mm
 const MARGIN = 15;
