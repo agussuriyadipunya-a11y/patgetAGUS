@@ -199,8 +199,7 @@ export async function renderMenu(container, categoryId = "pln") {
     <div class="page">
       <div class="page-head">
         <div>
-          <span class="eyebrow">Menu pembayaran</span>
-          <h2>Pilih layanan</h2>
+          <h2>Pilih Layanan</h2>
           <p>Proses pembayaran dan cetak resi dalam satu alur.</p>
         </div>
         ${state.simulation ? `<span class="sim-chip"><i></i> MODE SIMULASI</span>` : `<span class="sim-chip live"><i></i> MODE REALTIME</span>`}

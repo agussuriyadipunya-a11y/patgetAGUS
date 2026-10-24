@@ -187,9 +187,8 @@ export async function renderDashboard(container) {
     <div class="page">
       <div class="page-head">
         <div>
-          <span class="eyebrow">Ringkasan hari ini</span>
           <h2>${greeting()}, ${escapeHtml(state.user?.username || "Admin")} 👋</h2>
-          <p>${escapeHtml(fmtDate(new Date(), { weekday: true, long: true }))} · Pantau performa kios pembayaran Anda.</p>
+          <p>${escapeHtml(fmtDate(new Date(), { weekday: true, long: true }))} · Pantau performa kios pembayaran Anda secara realtime.</p>
         </div>
         <div class="page-actions">
           <a class="btn btn-ghost" href="#/riwayat">${icon("history", 17)} Riwayat</a>

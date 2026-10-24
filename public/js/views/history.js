@@ -34,8 +34,7 @@ export async function renderHistory(container) {
     <div class="page">
       <div class="page-head">
         <div>
-          <span class="eyebrow">Arsip transaksi</span>
-          <h2>Riwayat transaksi</h2>
+          <h2>Riwayat Transaksi</h2>
           <p>Semua transaksi tercatat otomatis dan dapat dicetak ulang kapan saja.</p>
         </div>
         <div class="page-actions">

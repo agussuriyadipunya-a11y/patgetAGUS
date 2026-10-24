@@ -32,8 +32,7 @@ export async function renderExport(container) {
     <div class="page">
       <div class="page-head">
         <div>
-          <span class="eyebrow">Laporan &amp; arsip</span>
-          <h2>Export transaksi</h2>
+          <h2>Export Transaksi</h2>
           <p>Unduh seluruh transaksi sesuai filter dalam format Excel atau PDF.</p>
         </div>
         <div class="page-actions">

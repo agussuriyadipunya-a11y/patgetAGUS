@@ -37,7 +37,6 @@ export async function renderSettings(container) {
     <div class="page">
       <div class="page-head">
         <div>
-          <span class="eyebrow">Konfigurasi sistem</span>
           <h2>Pengaturan</h2>
           <p>Atur identitas kios, tampilan aplikasi, dan keamanan akun administrator.</p>
         </div>

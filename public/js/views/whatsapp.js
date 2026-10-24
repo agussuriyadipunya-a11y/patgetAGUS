@@ -172,7 +172,6 @@ export async function renderWhatsapp(container) {
     <div class="page">
       <div class="page-head">
         <div>
-          <span class="eyebrow">Integrasi pesan</span>
           <h2>WhatsApp</h2>
           <p>Hubungkan WhatsApp kios untuk mengirim bukti transaksi sebagai dokumen PDF langsung ke pelanggan.</p>
         </div>
