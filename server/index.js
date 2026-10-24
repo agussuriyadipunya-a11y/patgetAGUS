@@ -500,31 +500,37 @@ function lanAddresses() {
   return list;
 }
 
-const server = app.listen(PORT, HOST, () => {
-  const settings = getSettings();
-  console.log("");
-  console.log("  ╔══════════════════════════════════════════════╗");
-  console.log("  ║        PAYMENT GATEWAY — KIOSK PEMBAYARAN    ║");
-  console.log("  ╚══════════════════════════════════════════════╝");
-  console.log(`  Kios      : ${settings.kioskName}`);
-  console.log(`  Lokal     : http://localhost:${PORT}`);
-  for (const ip of lanAddresses()) console.log(`  Jaringan  : http://${ip}:${PORT}`);
-  console.log(`  Mode      : ${SIMULATION_MODE ? "SIMULASI (data tagihan dihasilkan sistem)" : "PRODUKSI"}`);
-  console.log(`  Database  : data/payment-gateway.db`);
-  console.log(`  Seed      : ${seeded ? `${seeded} transaksi demo dibuat` : "data sudah tersedia"}`);
-  console.log("  Login     : admin / admin123 (ubah di menu Pengaturan)");
-  console.log("");
-  whatsapp.init();
-});
+let server = null;
+if (!process.env.VERCEL) {
+  server = app.listen(PORT, HOST, () => {
+    const settings = getSettings();
+    console.log("");
+    console.log("  ╔══════════════════════════════════════════════╗");
+    console.log("  ║        PAYMENT GATEWAY — KIOSK PEMBAYARAN    ║");
+    console.log("  ╚══════════════════════════════════════════════╝");
+    console.log(`  Kios      : ${settings.kioskName}`);
+    console.log(`  Lokal     : http://localhost:${PORT}`);
+    for (const ip of lanAddresses()) console.log(`  Jaringan  : http://${ip}:${PORT}`);
+    console.log(`  Mode      : ${SIMULATION_MODE ? "SIMULASI (data tagihan dihasilkan sistem)" : "PRODUKSI"}`);
+    console.log(`  Database  : data/payment-gateway.db`);
+    console.log(`  Seed      : ${seeded ? `${seeded} transaksi demo dibuat` : "data sudah tersedia"}`);
+    console.log("  Login     : admin / admin123 (ubah di menu Pengaturan)");
+    console.log("");
+    whatsapp.init();
+  });
 
-process.on("SIGINT", async () => {
-  await whatsapp.shutdown();
-  server.close(() => process.exit(0));
-  setTimeout(() => process.exit(0), 1500).unref();
-});
+  process.on("SIGINT", async () => {
+    await whatsapp.shutdown();
+    if (server) server.close(() => process.exit(0));
+    setTimeout(() => process.exit(0), 1500).unref();
+  });
 
-process.on("SIGTERM", async () => {
-  await whatsapp.shutdown();
-  server.close(() => process.exit(0));
-  setTimeout(() => process.exit(0), 1500).unref();
-});
+  process.on("SIGTERM", async () => {
+    await whatsapp.shutdown();
+    if (server) server.close(() => process.exit(0));
+    setTimeout(() => process.exit(0), 1500).unref();
+  });
+}
+
+export default app;
+export { app };
