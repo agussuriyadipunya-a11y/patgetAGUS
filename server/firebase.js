@@ -1,4 +1,5 @@
-import admin from "firebase-admin";
+import { getApps, initializeApp, cert } from "firebase-admin/app";
+import { getDatabase } from "firebase-admin/database";
 import fs from "node:fs";
 import { db } from "./db.js";
 
@@ -17,9 +18,10 @@ export function initFirebaseAdmin() {
   initAttempted = true;
 
   try {
-    if (admin.apps.length > 0) {
-      adminApp = admin.apps[0];
-      rtdb = adminApp.database();
+    const apps = getApps();
+    if (apps.length > 0) {
+      adminApp = apps[0];
+      rtdb = getDatabase(adminApp);
       return { app: adminApp, rtdb, error: null };
     }
 
@@ -36,31 +38,31 @@ export function initFirebaseAdmin() {
       process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
 
     if (serviceAccountPath && fs.existsSync(serviceAccountPath)) {
-      credential = admin.credential.cert(JSON.parse(fs.readFileSync(serviceAccountPath, "utf8")));
+      credential = cert(JSON.parse(fs.readFileSync(serviceAccountPath, "utf8")));
     } else if (process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
       // 2. Cek variabel individual di process.env
       const privateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n");
-      credential = admin.credential.cert({
+      credential = cert({
         projectId,
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
         privateKey,
       });
     } else if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
       // 3. Cek JSON string di process.env
-      credential = admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON));
+      credential = cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON));
     } else {
       // Kredensial service account belum diisi di .env
       initError = "Kredensial Service Account belum dikonfigurasi di server (process.env).";
       return { app: null, rtdb: null, error: initError };
     }
 
-    adminApp = admin.initializeApp({
+    adminApp = initializeApp({
       credential,
       databaseURL,
       projectId,
     });
 
-    rtdb = adminApp.database();
+    rtdb = getDatabase(adminApp);
     console.log(`[Firebase Admin] Terhubung aman ke project "${projectId}" (Database: ${databaseURL})`);
     return { app: adminApp, rtdb, error: null };
   } catch (err) {
