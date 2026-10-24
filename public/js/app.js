@@ -275,7 +275,13 @@ function buildShell() {
   });
   overlayEl?.addEventListener("click", closeSidebar);
   sidebarEl?.querySelectorAll(".nav-item").forEach((item) => {
-    item.addEventListener("click", closeSidebar);
+    item.addEventListener("click", () => {
+      closeSidebar();
+      const targetHash = item.getAttribute("href");
+      if (location.hash === targetHash) {
+        renderRoute();
+      }
+    });
   });
   appRoot.querySelector("#logoutBtn").addEventListener("click", handleLogout);
   appRoot.querySelector("#waPill").addEventListener("click", () => {
@@ -314,6 +320,7 @@ async function renderRoute() {
     }
     if (typeof result === "function") currentCleanup = result;
   } catch (error) {
+    console.error("[Route Error]", error);
     if (token !== routeToken) return;
     view.innerHTML = `
       <div class="page">

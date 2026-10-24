@@ -16,6 +16,7 @@ Thumbs.db
 # Test & Temporary exports
 _test_*
 *.tmp
+.chrome_tmp*
 
 # Environment & Secret files
 .env

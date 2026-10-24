@@ -141,26 +141,66 @@ export function ensureAdminUser() {
   }
 }
 
-export function getSession(token) {
-  if (!token) return null;
-  const row = db.prepare("SELECT * FROM sessions WHERE token = ?").get(token);
-  if (!row) return null;
-  if (new Date(row.expires_at).getTime() < Date.now()) {
-    db.prepare("DELETE FROM sessions WHERE token = ?").run(token);
+const SESSION_SECRET = process.env.SESSION_SECRET || "pg_kiosk_secure_session_secret_2026_xyz";
+
+function signSessionToken(username, ttlMs) {
+  const expiresAt = Date.now() + ttlMs;
+  const payload = Buffer.from(JSON.stringify({ u: username, exp: expiresAt })).toString("base64url");
+  const sig = crypto.createHmac("sha256", SESSION_SECRET).update(payload).digest("base64url");
+  return `${payload}.${sig}`;
+}
+
+function verifySignedSession(token) {
+  if (!token || typeof token !== "string" || !token.includes(".")) return null;
+  const parts = token.split(".");
+  if (parts.length !== 2) return null;
+  const [payload, sig] = parts;
+  if (!payload || !sig) return null;
+  const expectedSig = crypto.createHmac("sha256", SESSION_SECRET).update(payload).digest("base64url");
+  if (sig.length !== expectedSig.length) return null;
+  if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expectedSig))) return null;
+  try {
+    const data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+    if (data.exp < Date.now()) return null;
+    return { token, username: data.u, expires_at: new Date(data.exp).toISOString() };
+  } catch {
     return null;
   }
-  return row;
+}
+
+export function getSession(token) {
+  if (!token) return null;
+  // 1. Verifikasi signed token (resilient untuk serverless multi-instance seperti Vercel)
+  const verified = verifySignedSession(token);
+  if (verified) return verified;
+
+  // 2. Fallback cek tabel database lokal jika ada token hex
+  try {
+    const row = db.prepare("SELECT * FROM sessions WHERE token = ?").get(token);
+    if (!row) return null;
+    if (new Date(row.expires_at).getTime() < Date.now()) {
+      db.prepare("DELETE FROM sessions WHERE token = ?").run(token);
+      return null;
+    }
+    return row;
+  } catch {
+    return null;
+  }
 }
 
 export function createSession(username, ttlMs = 1000 * 60 * 60 * 12) {
-  const token = crypto.randomBytes(32).toString("hex");
+  const token = signSessionToken(username, ttlMs);
   const now = new Date();
-  db.prepare("INSERT INTO sessions (token, username, created_at, expires_at) VALUES (?, ?, ?, ?)").run(
-    token,
-    username,
-    now.toISOString(),
-    new Date(now.getTime() + ttlMs).toISOString(),
-  );
+  try {
+    db.prepare("INSERT INTO sessions (token, username, created_at, expires_at) VALUES (?, ?, ?, ?)").run(
+      token,
+      username,
+      now.toISOString(),
+      new Date(now.getTime() + ttlMs).toISOString(),
+    );
+  } catch {
+    // Abaikan jika DB busy/read-only pada serverless, signed token tetap valid!
+  }
   return token;
 }
 
