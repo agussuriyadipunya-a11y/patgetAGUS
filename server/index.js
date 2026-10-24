@@ -132,8 +132,8 @@ api.get("/catalog", (req, res) => {
 });
 
 api.post("/inquiry", (req, res) => {
-  const { categoryId, typeId, productId, customerId } = req.body || {};
-  const result = runInquiry({ categoryId, typeId, productId, customerId });
+  const { categoryId, typeId, productId, customerId, customerName, customAmount, amount } = req.body || {};
+  const result = runInquiry({ categoryId, typeId, productId, customerId, customerName, customAmount, amount });
   if (!result.ok) throw new AppError(400, result.message);
   res.json(result);
 });

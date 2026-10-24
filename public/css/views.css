@@ -128,6 +128,116 @@
 .summary-card .btn-lg { width: 100%; }
 .summary-empty { display: grid; gap: 4px; padding: 12px; border: 1px dashed var(--border-strong); border-radius: 10px; color: var(--muted-2); font-size: 0.72rem; text-align: center; line-height: 1.5; }
 
+/* Nominal Adjuster */
+.nominal-adjuster {
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-top: 4px;
+}
+.adjuster-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.adjuster-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.73rem;
+  font-weight: 650;
+  color: var(--text-2);
+}
+.btn-reset-nominal {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 0.68rem;
+  font-weight: 650;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+}
+.btn-reset-nominal:hover {
+  background: color-mix(in srgb, var(--primary) 15%, transparent);
+  text-decoration: underline;
+}
+.adjuster-input-row {
+  display: flex;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  transition: border-color 0.15s ease;
+}
+.adjuster-input-row:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 15%, transparent);
+}
+.adjuster-rp {
+  padding: 0 10px;
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: var(--muted);
+  background: var(--surface-2);
+  height: 34px;
+  display: flex;
+  align-items: center;
+  border-right: 1px solid var(--border);
+}
+.adjuster-input {
+  flex: 1;
+  border: none !important;
+  background: transparent !important;
+  padding: 6px 10px;
+  font-size: 0.88rem;
+  font-weight: 650;
+  color: var(--text-2);
+  outline: none;
+  min-width: 0;
+}
+.adjuster-stepper {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+}
+.step-btn {
+  padding: 5px 2px;
+  font-size: 0.66rem;
+  font-weight: 650;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+.step-btn.step-minus {
+  color: #ef4444;
+}
+.step-btn.step-minus:hover {
+  background: color-mix(in srgb, #ef4444 12%, var(--surface));
+  border-color: #ef4444;
+}
+.step-btn.step-plus {
+  color: #10b981;
+}
+.step-btn.step-plus:hover {
+  background: color-mix(in srgb, #10b981 12%, var(--surface));
+  border-color: #10b981;
+}
+.step-btn:active {
+  transform: scale(0.96);
+}
+
 /* ---------- Receipt ---------- */
 .receipt-modal { max-width: 408px; overflow: hidden; }
 .success-hero { padding: 24px 24px 14px; text-align: center; background: var(--surface-2); border-radius: var(--radius-lg) var(--radius-lg) 0 0; }

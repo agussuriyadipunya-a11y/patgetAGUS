@@ -71,8 +71,30 @@ export function getPaymentMethodLabel(id) {
 export function buildOrder(input) {
   const type = findType(input.categoryId, input.typeId);
   if (!type) throw new AppError(400, "Kategori atau jenis produk tidak ditemukan.");
-  if (type.kind === "prepaid") return buildPrepaidOrder(input);
-  return runInquiry(input);
+  let order;
+  if (type.kind === "prepaid") {
+    order = buildPrepaidOrder(input);
+  } else {
+    order = runInquiry(input);
+  }
+  if (!order.ok) return order;
+
+  // Override nama pelanggan asli dari kasir jika diisi
+  if (input.customerName && String(input.customerName).trim()) {
+    order.customerName = String(input.customerName).trim();
+  }
+
+  // Override nominal jika diedit / ditambah / dikurang oleh kasir
+  const custom = Number(input.customAmount !== undefined ? input.customAmount : input.amount);
+  if (Number.isFinite(custom) && custom > 0) {
+    order.amount = custom;
+    order.total = order.amount + (order.adminFee || 0);
+    if (order.items && order.items.length) {
+      order.items[0].amount = order.amount;
+    }
+  }
+
+  return order;
 }
 
 function uniqueRef(date) {

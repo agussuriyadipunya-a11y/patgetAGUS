@@ -73,6 +73,15 @@ function typeContentHtml(category, type, local) {
         <span class="field-hint">${escapeHtml(field.hint || "")}</span>
       </label>
 
+      <label class="field" style="margin-bottom:8px">
+        <span>Nama Pelanggan (opsional)</span>
+        <div class="input-icon">
+          ${icon("user", 17)}
+          <input class="input" id="customerNameInput" placeholder="Ketik nama pelanggan..." value="${escapeHtml(local.customerName || "")}" autocomplete="off" />
+        </div>
+        <span class="field-hint">Akan dicetak di struk & resi transaksi. Kosongkan jika ingin default.</span>
+      </label>
+
       ${type.field.inputMode !== "tel" ? `
         <label class="field" style="margin-bottom:8px">
           <span>Nomor WhatsApp Pelanggan (opsional untuk kirim struk/resi otomatis)</span>
@@ -136,25 +145,53 @@ function summaryHtml(local) {
       <div class="summary-rows">
         <div class="summary-row"><span>Layanan</span><strong>${escapeHtml(local.category.name)} · ${escapeHtml(type.label)}</strong></div>
         <div class="summary-row"><span>Pelanggan</span><strong>${escapeHtml(local.customerId || "Belum diisi")}</strong></div>
+        ${local.customerName ? `<div class="summary-row summary-row-name"><span>Nama</span><strong>${escapeHtml(local.customerName)}</strong></div>` : ""}
         <div class="summary-row"><span>Metode</span><strong>${escapeHtml(method?.label || "Tunai")}</strong></div>
       </div>
       <div class="summary-empty">${type.kind === "prepaid" ? "Pilih nominal pulsa/token terlebih dahulu." : "Pilih penyedia layanan terlebih dahulu."}</div>`;
   }
 
-  const amount = type.kind === "postpaid" ? (inquiry?.amount ?? 0) : product.price;
+  const baseAmount = type.kind === "postpaid" ? (inquiry?.amount ?? 0) : product.price;
+  const currentAmount = local.customAmount !== null ? local.customAmount : baseAmount;
   const adminFee = type.kind === "postpaid" ? (inquiry?.adminFee ?? product.adminFee) : product.adminFee;
-  const total = type.kind === "postpaid" ? (inquiry?.total ?? 0) : product.price + product.adminFee;
+  const total = type.kind === "postpaid" && !inquiry ? 0 : currentAmount + adminFee;
+  const displayName = local.customerName || inquiry?.customerName || "-";
+  const canAdjust = (type.kind === "prepaid" && product) || (type.kind === "postpaid" && inquiry);
 
   return `
     <div class="summary-rows">
       <div class="summary-row"><span>Layanan</span><strong>${escapeHtml(local.category.name)} · ${escapeHtml(type.label)}</strong></div>
       <div class="summary-row"><span>Produk</span><strong>${escapeHtml(product.name)}</strong></div>
       <div class="summary-row"><span>Nomor</span><strong>${escapeHtml(local.customerId || "Belum diisi")}</strong></div>
-      ${inquiry ? `<div class="summary-row"><span>Nama</span><strong>${escapeHtml(inquiry.customerName)}</strong></div>` : ""}
-      <div class="summary-row"><span>Nominal</span><strong>${type.kind === "postpaid" && !inquiry ? "Cek tagihan dulu" : rp(amount)}</strong></div>
+      <div class="summary-row summary-row-name"><span>Nama</span><strong>${escapeHtml(displayName)}</strong></div>
+      <div class="summary-row summary-row-nominal"><span>Nominal</span><strong>${type.kind === "postpaid" && !inquiry ? "Cek tagihan dulu" : rp(currentAmount)}</strong></div>
       <div class="summary-row"><span>Biaya admin</span><strong>${rp(adminFee)}</strong></div>
       <div class="summary-row"><span>Metode</span><strong>${escapeHtml(method?.label || "Tunai")}</strong></div>
     </div>
+
+    ${canAdjust ? `
+      <div class="nominal-adjuster">
+        <div class="adjuster-header">
+          <span class="adjuster-title">${icon("sliders", 14)} Ubah Nominal</span>
+          ${local.customAmount !== null && local.customAmount !== baseAmount ? `
+            <button type="button" class="btn-reset-nominal" id="resetNominalBtn" title="Kembalikan ke nominal asli">Reset Asli</button>
+          ` : ""}
+        </div>
+        <div class="adjuster-input-row">
+          <span class="adjuster-rp">Rp</span>
+          <input type="number" id="customAmountInput" class="adjuster-input" value="${currentAmount}" min="1000" step="1000" />
+        </div>
+        <div class="adjuster-stepper">
+          <button type="button" class="step-btn step-minus" data-step="-50000" title="Kurang 50.000">-50rb</button>
+          <button type="button" class="step-btn step-minus" data-step="-10000" title="Kurang 10.000">-10rb</button>
+          <button type="button" class="step-btn step-minus" data-step="-5000" title="Kurang 5.000">-5rb</button>
+          <button type="button" class="step-btn step-plus" data-step="5000" title="Tambah 5.000">+5rb</button>
+          <button type="button" class="step-btn step-plus" data-step="10000" title="Tambah 10.000">+10rb</button>
+          <button type="button" class="step-btn step-plus" data-step="50000" title="Tambah 50.000">+50rb</button>
+        </div>
+      </div>
+    ` : ""}
+
     <div class="summary-total"><span>Total bayar</span><strong>${type.kind === "postpaid" && !inquiry ? "—" : rp(total)}</strong></div>`;
 }
 
@@ -180,7 +217,9 @@ export async function renderMenu(container, categoryId = "pln") {
     type: category.types[0],
     productId: null,
     customerId: "",
+    customerName: "",
     customerPhone: "",
+    customAmount: null,
     method: "tunai",
     inquiry: null,
     checking: false,
@@ -276,7 +315,9 @@ export async function renderMenu(container, categoryId = "pln") {
 
   function resetForm() {
     local.customerId = "";
+    local.customerName = "";
     local.customerPhone = "";
+    local.customAmount = null;
     local.inquiry = null;
     local.method = "tunai";
     local.productId = local.type.products.length === 1 ? local.type.products[0].id : null;
@@ -284,6 +325,23 @@ export async function renderMenu(container, categoryId = "pln") {
   }
 
   container.addEventListener("click", async (event) => {
+    const stepBtn = event.target.closest("[data-step]");
+    if (stepBtn) {
+      const step = Number(stepBtn.dataset.step);
+      const product = local.type.products.find((p) => p.id === local.productId);
+      const baseAmount = local.type.kind === "postpaid" ? (local.inquiry?.amount ?? 0) : (product?.price ?? 0);
+      const cur = local.customAmount !== null ? local.customAmount : baseAmount;
+      local.customAmount = Math.max(1000, cur + step);
+      update();
+      return;
+    }
+
+    if (event.target.closest("#resetNominalBtn")) {
+      local.customAmount = null;
+      update();
+      return;
+    }
+
     if (event.target.closest("#pickCustomerBtn")) {
       try {
         const list = await api.get("/customers/all");
@@ -337,10 +395,13 @@ export async function renderMenu(container, categoryId = "pln") {
                       local.customerId = found.customer_no || found.phone || "";
                     }
                     local.customerPhone = found.phone || "";
+                    local.customerName = found.name || "";
                     const custInput = container.querySelector("#customerInput");
                     const phoneInput = container.querySelector("#customerPhoneInput");
+                    const nameInput = container.querySelector("#customerNameInput");
                     if (custInput) custInput.value = local.customerId;
                     if (phoneInput) phoneInput.value = local.customerPhone;
+                    if (nameInput) nameInput.value = local.customerName;
                     local.inquiry = null;
                     const bill = container.querySelector("#billResult");
                     if (bill) bill.innerHTML = "";
@@ -378,6 +439,8 @@ export async function renderMenu(container, categoryId = "pln") {
       local.type = category.types.find((t) => t.id === typeId) || local.type;
       local.inquiry = null;
       local.customerId = "";
+      local.customerName = "";
+      local.customAmount = null;
       local.productId = local.type.products.length === 1 ? local.type.products[0].id : null;
       container.querySelectorAll("#typeTabs button").forEach((button) => {
         button.classList.toggle("active", button.dataset.type === typeId);
@@ -391,6 +454,7 @@ export async function renderMenu(container, categoryId = "pln") {
     const productButton = event.target.closest("[data-product]");
     if (productButton) {
       local.productId = productButton.dataset.product;
+      local.customAmount = null;
       local.inquiry = null;
       const bill = container.querySelector("#billResult");
       if (bill) bill.innerHTML = "";
@@ -424,8 +488,15 @@ export async function renderMenu(container, categoryId = "pln") {
           typeId: local.type.id,
           productId: local.productId,
           customerId: local.customerId,
+          customerName: local.customerName || undefined,
         });
         local.inquiry = result;
+        local.customAmount = null;
+        if (result.customerName && result.customerName !== "-" && !local.customerName) {
+          local.customerName = result.customerName;
+          const nameInput = container.querySelector("#customerNameInput");
+          if (nameInput) nameInput.value = result.customerName;
+        }
         container.querySelector("#billResult").innerHTML = billHtml(result);
         toast(`Tagihan ${result.customerName} ditemukan.`, "success");
       } catch (error) {
@@ -452,6 +523,8 @@ export async function renderMenu(container, categoryId = "pln") {
           typeId: local.type.id,
           productId: local.productId,
           customerId: local.customerId,
+          customerName: local.customerName.trim() || (local.inquiry ? local.inquiry.customerName : null),
+          customAmount: local.customAmount !== null ? local.customAmount : null,
           customerPhone: local.customerPhone || (/^(08|628)\d{7,12}$/.test(local.customerId) ? local.customerId : null),
           paymentMethod: local.method,
         });
@@ -468,6 +541,31 @@ export async function renderMenu(container, categoryId = "pln") {
   });
 
   container.addEventListener("input", (event) => {
+    if (event.target.id === "customerNameInput") {
+      local.customerName = event.target.value;
+      const nameRowEl = summaryBody.querySelector(".summary-row-name strong");
+      if (nameRowEl) {
+        nameRowEl.textContent = local.customerName || local.inquiry?.customerName || "-";
+      }
+      return;
+    }
+    if (event.target.id === "customAmountInput") {
+      const val = Number(event.target.value);
+      if (Number.isFinite(val) && val >= 0) {
+        local.customAmount = val;
+        const product = local.type.products.find((p) => p.id === local.productId);
+        const baseAmount = local.type.kind === "postpaid" ? (local.inquiry?.amount ?? 0) : (product?.price ?? 0);
+        const adminFee = local.type.kind === "postpaid" ? (local.inquiry?.adminFee ?? product?.adminFee ?? 0) : (product?.adminFee ?? 0);
+        const total = val + adminFee;
+        const totalEl = summaryBody.querySelector(".summary-total strong");
+        if (totalEl) totalEl.textContent = rp(total);
+        const nominalRowEl = summaryBody.querySelector(".summary-row-nominal strong");
+        if (nominalRowEl) nominalRowEl.textContent = rp(val);
+        const resetBtn = summaryBody.querySelector("#resetNominalBtn");
+        if (resetBtn) resetBtn.style.display = (val !== baseAmount) ? "inline-block" : "none";
+      }
+      return;
+    }
     if (event.target.id === "customerPhoneInput") {
       local.customerPhone = event.target.value.trim();
       return;
@@ -482,6 +580,14 @@ export async function renderMenu(container, categoryId = "pln") {
       if (bill) bill.innerHTML = "";
     }
     update();
+  });
+
+  container.addEventListener("change", (event) => {
+    if (event.target.id === "customAmountInput") {
+      const val = Math.max(1000, Number(event.target.value) || 0);
+      local.customAmount = val;
+      update();
+    }
   });
 
   update();

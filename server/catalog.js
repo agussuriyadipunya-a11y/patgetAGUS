@@ -1,27 +1,16 @@
 import { hashString, monthName, pick } from "./util.js";
+import { db } from "./db.js";
 
-const NAMES = [
-  "BUDI SANTOSO",
-  "SITI AMINAH",
-  "AGUS PRATAMA",
-  "DEWI LESTARI",
-  "RIZKY RAMADHAN",
-  "NUR HIDAYAH",
-  "FAJAR NUGROHO",
-  "RINA WULANDARI",
-  "HENDRA GUNAWAN",
-  "MAYA PUTRI",
-  "ANDI SAPUTRA",
-  "LILIS SURYANI",
-  "DIMAS ARDIANSYAH",
-  "PUTRI AYU",
-  "WAHYU SETIAWAN",
-  "EKA RAHAYU",
-  "TEGUH FIRMANSYAH",
-  "INDAH PERMATASARI",
-  "BAYU KURNIAWAN",
-  "RATNA DEWI",
-];
+export function lookupCustomerName(customerId) {
+  if (!customerId) return null;
+  try {
+    const row = db
+      .prepare("SELECT name FROM customers WHERE customer_no = ? OR phone = ? LIMIT 1")
+      .get(String(customerId).trim(), String(customerId).trim());
+    if (row && row.name) return row.name;
+  } catch {}
+  return null;
+}
 
 const PLN_TARIFFS = ["R1 / 1300 VA", "R1 / 2200 VA", "B1 / 4500 VA", "R2 / 3500 VA"];
 
@@ -317,8 +306,10 @@ export function validateCustomerId(type, rawValue) {
   return { ok: true, value };
 }
 
-function nameFor(seed) {
-  return pick(NAMES, seed);
+function nameFor(seed, customerId = null) {
+  const found = lookupCustomerName(customerId);
+  if (found) return found;
+  return "-";
 }
 
 function round500(n) {
@@ -362,7 +353,7 @@ function dueDate(days = 10) {
  * Semua data dihasilkan deterministik dari ID pelanggan sehingga hasil
  * pengecekan dan pembayaran selalu konsisten.
  */
-export function runInquiry({ categoryId, typeId, productId, customerId }) {
+export function runInquiry({ categoryId, typeId, productId, customerId, customerName: customName, customAmount, amount: inputAmount }) {
   const category = findCategory(categoryId);
   const type = findType(categoryId, typeId);
   if (!category || !type) {
@@ -379,7 +370,9 @@ export function runInquiry({ categoryId, typeId, productId, customerId }) {
 
   const value = validation.value;
   const seed = hashString(`${categoryId}:${typeId}:${product.id}:${value}`);
-  const customerName = nameFor(seed);
+  const finalCustomerName = (customName && String(customName).trim())
+    ? String(customName).trim()
+    : nameFor(seed, value);
   const period = monthName();
   const meta = [];
   const items = [];
@@ -449,6 +442,14 @@ export function runInquiry({ categoryId, typeId, productId, customerId }) {
     return { ok: false, message: "Jenis tagihan tidak dikenali." };
   }
 
+  const custom = Number(customAmount !== undefined ? customAmount : inputAmount);
+  if (Number.isFinite(custom) && custom > 0) {
+    amount = custom;
+    if (items.length) {
+      items[0].amount = custom;
+    }
+  }
+
   const adminFee = product.adminFee || 0;
   return {
     ok: true,
@@ -460,7 +461,7 @@ export function runInquiry({ categoryId, typeId, productId, customerId }) {
     productId: product.id,
     productLabel: product.name,
     customerId: value,
-    customerName,
+    customerName: finalCustomerName,
     amount,
     adminFee,
     total: amount + adminFee,
@@ -471,7 +472,7 @@ export function runInquiry({ categoryId, typeId, productId, customerId }) {
 }
 
 /** Susun order prabayar (harga produk dihitung di server). */
-export function buildPrepaidOrder({ categoryId, typeId, productId, customerId }) {
+export function buildPrepaidOrder({ categoryId, typeId, productId, customerId, customerName: customName, customAmount, amount: inputAmount }) {
   const category = findCategory(categoryId);
   const type = findType(categoryId, typeId);
   if (!category || !type) return { ok: false, message: "Produk tidak ditemukan." };
@@ -486,7 +487,17 @@ export function buildPrepaidOrder({ categoryId, typeId, productId, customerId })
   const value = validation.value;
   const seed = hashString(`${categoryId}:${typeId}:${product.id}:${value}`);
   const isPhone = type.field.inputMode === "tel";
-  const items = [{ label: product.name, amount: product.price }];
+  const finalCustomerName = (customName && String(customName).trim())
+    ? String(customName).trim()
+    : (isPhone ? "Nomor Prabayar" : nameFor(seed, value));
+
+  let finalPrice = product.price;
+  const custom = Number(customAmount !== undefined ? customAmount : inputAmount);
+  if (Number.isFinite(custom) && custom > 0) {
+    finalPrice = custom;
+  }
+
+  const items = [{ label: product.name, amount: finalPrice }];
   const meta = [];
 
   if (isPhone) {
@@ -509,10 +520,10 @@ export function buildPrepaidOrder({ categoryId, typeId, productId, customerId })
     productId: product.id,
     productLabel: product.name,
     customerId: value,
-    customerName: isPhone ? "Nomor Prabayar" : nameFor(seed),
-    amount: product.price,
+    customerName: finalCustomerName,
+    amount: finalPrice,
     adminFee: product.adminFee || 0,
-    total: product.price + (product.adminFee || 0),
+    total: finalPrice + (product.adminFee || 0),
     items,
     meta,
     period: monthName(),
