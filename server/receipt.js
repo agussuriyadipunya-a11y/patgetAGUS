@@ -130,7 +130,11 @@ function drawReceipt(doc, trx, settings, qrPng) {
     y += Math.max(itemHeight, 9) + 2;
   }
 
-  y = keyValue(doc, y, "Biaya Admin", rupiah(trx.adminFee));
+  const isFreeAdmin = !trx.adminFee || trx.adminFee === 0;
+  y = keyValue(doc, y, "Biaya Admin", isFreeAdmin ? "Rp 0 (BEBAS ADMIN)" : rupiah(trx.adminFee), {
+    bold: isFreeAdmin,
+    color: isFreeAdmin ? "#059669" : "#0f172a",
+  });
 
   // Total box
   doc.roundedRect(MARGIN, y + 2, CONTENT_WIDTH, 34, 6).fill("#0f172a");
@@ -189,7 +193,7 @@ function drawReceipt(doc, trx, settings, qrPng) {
   }
   y = centered(doc, `Dicetak ${formatDateTime(new Date())}`, y + 2, { size: 4.9, color: "#cbd5e1" });
 
-  return y + 12;
+  return y + 25;
 }
 
 export async function createReceiptPdf(trx, settings = getSettings()) {
@@ -200,7 +204,7 @@ export async function createReceiptPdf(trx, settings = getSettings()) {
   const measured = drawReceipt(probe, trx, settings, png);
   probe.end();
 
-  const height = Math.max(Math.ceil(measured), 420);
+  const height = Math.max(Math.ceil(measured) + 20, 440);
   const doc = new PDFDocument({
     size: [RECEIPT_WIDTH, height],
     margin: 0,

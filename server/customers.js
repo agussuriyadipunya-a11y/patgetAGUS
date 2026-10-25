@@ -1,6 +1,7 @@
 import { db } from "./db.js";
 import { AppError } from "./transactions.js";
 import { nowIso } from "./util.js";
+import { saveCloudRecord, deleteCloudRecord } from "./firebase.js";
 
 function normalizeCustomerPhone(phone) {
   let digits = String(phone || "").replace(/[^\d]/g, "");
@@ -78,7 +79,9 @@ export function createCustomer(input = {}) {
       now,
     );
 
-  return getCustomerById(Number(info.lastInsertRowid));
+  const cust = getCustomerById(Number(info.lastInsertRowid));
+  if (cust) saveCloudRecord("customers", cust.id, cust);
+  return cust;
 }
 
 export function updateCustomer(id, input = {}) {
@@ -108,12 +111,15 @@ export function updateCustomer(id, input = {}) {
     id,
   );
 
-  return getCustomerById(id);
+  const updated = getCustomerById(id);
+  if (updated) saveCloudRecord("customers", updated.id, updated);
+  return updated;
 }
 
 export function deleteCustomer(id) {
   getCustomerById(id);
   db.prepare("DELETE FROM customers WHERE id = ?").run(id);
+  deleteCloudRecord("customers", id);
   return { ok: true, message: "Pelanggan berhasil dihapus." };
 }
 

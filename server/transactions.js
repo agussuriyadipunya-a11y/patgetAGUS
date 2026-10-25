@@ -1,6 +1,7 @@
 import { db } from "./db.js";
 import { buildPrepaidOrder, findCategory, findType, runInquiry } from "./catalog.js";
 import { businessDate, nowIso, randomRef } from "./util.js";
+import { saveCloudRecord } from "./firebase.js";
 
 export const PAYMENT_METHODS = [
   { id: "tunai", label: "Tunai" },
@@ -84,15 +85,21 @@ export function buildOrder(input) {
     order.customerName = String(input.customerName).trim();
   }
 
+  // Fitur Hapus Biaya Admin (Bebas Biaya Admin)
+  if (input.waiveAdminFee === true || input.waiveAdminFee === "true" || input.adminFee === 0 || input.adminFee === "0") {
+    order.adminFee = 0;
+  }
+
   // Override nominal jika diedit / ditambah / dikurang oleh kasir
   const custom = Number(input.customAmount !== undefined ? input.customAmount : input.amount);
   if (Number.isFinite(custom) && custom > 0) {
     order.amount = custom;
-    order.total = order.amount + (order.adminFee || 0);
     if (order.items && order.items.length) {
       order.items[0].amount = order.amount;
     }
   }
+
+  order.total = order.amount + (order.adminFee || 0);
 
   return order;
 }
@@ -159,7 +166,11 @@ export function createTransaction(input) {
       createdAt,
     );
 
-  return getTransactionById(Number(info.lastInsertRowid));
+  const trx = getTransactionById(Number(info.lastInsertRowid));
+  if (trx) {
+    saveCloudRecord("transactions", trx.ref, trx);
+  }
+  return trx;
 }
 
 export function markWaSent(ref) {

@@ -153,7 +153,8 @@ function summaryHtml(local) {
 
   const baseAmount = type.kind === "postpaid" ? (inquiry?.amount ?? 0) : product.price;
   const currentAmount = local.customAmount !== null ? local.customAmount : baseAmount;
-  const adminFee = type.kind === "postpaid" ? (inquiry?.adminFee ?? product.adminFee) : product.adminFee;
+  const rawAdminFee = type.kind === "postpaid" ? (inquiry?.adminFee ?? product.adminFee ?? 0) : (product.adminFee ?? 0);
+  const adminFee = local.waiveAdminFee ? 0 : rawAdminFee;
   const total = type.kind === "postpaid" && !inquiry ? 0 : currentAmount + adminFee;
   const displayName = local.customerName || inquiry?.customerName || "-";
   const canAdjust = (type.kind === "prepaid" && product) || (type.kind === "postpaid" && inquiry);
@@ -165,9 +166,23 @@ function summaryHtml(local) {
       <div class="summary-row"><span>Nomor</span><strong>${escapeHtml(local.customerId || "Belum diisi")}</strong></div>
       <div class="summary-row summary-row-name"><span>Nama</span><strong>${escapeHtml(displayName)}</strong></div>
       <div class="summary-row summary-row-nominal"><span>Nominal</span><strong>${type.kind === "postpaid" && !inquiry ? "Cek tagihan dulu" : rp(currentAmount)}</strong></div>
-      <div class="summary-row"><span>Biaya admin</span><strong>${rp(adminFee)}</strong></div>
+      <div class="summary-row summary-row-admin">
+        <span>Biaya admin</span>
+        <div style="display:inline-flex;align-items:center;gap:6px">
+          ${local.waiveAdminFee ? `<span class="badge-free-admin">BEBAS ADMIN</span>` : ""}
+          <strong class="${local.waiveAdminFee ? 'text-free-admin' : ''}">${rp(adminFee)}</strong>
+        </div>
+      </div>
       <div class="summary-row"><span>Metode</span><strong>${escapeHtml(method?.label || "Tunai")}</strong></div>
     </div>
+
+    ${canAdjust && (rawAdminFee > 0 || local.waiveAdminFee) ? `
+      <div class="admin-waive-box">
+        <button type="button" class="btn-toggle-admin ${local.waiveAdminFee ? 'is-free' : ''}" id="toggleAdminBtn" title="${local.waiveAdminFee ? 'Klik untuk mengaktifkan kembali biaya admin' : 'Hapus biaya admin untuk transaksi bebas admin'}">
+          ${local.waiveAdminFee ? `${icon("check", 14)} Bebas Admin Aktif (Batalkan)` : `${icon("x", 14)} Hapus Biaya Admin (Bebas Admin)`}
+        </button>
+      </div>
+    ` : ""}
 
     ${canAdjust ? `
       <div class="nominal-adjuster">
@@ -220,6 +235,7 @@ export async function renderMenu(container, categoryId = "pln") {
     customerName: "",
     customerPhone: "",
     customAmount: null,
+    waiveAdminFee: false,
     method: "tunai",
     inquiry: null,
     checking: false,
@@ -441,6 +457,7 @@ export async function renderMenu(container, categoryId = "pln") {
       local.customerId = "";
       local.customerName = "";
       local.customAmount = null;
+      local.waiveAdminFee = false;
       local.productId = local.type.products.length === 1 ? local.type.products[0].id : null;
       container.querySelectorAll("#typeTabs button").forEach((button) => {
         button.classList.toggle("active", button.dataset.type === typeId);
@@ -512,6 +529,13 @@ export async function renderMenu(container, categoryId = "pln") {
       return;
     }
 
+    if (event.target.closest("#toggleAdminBtn")) {
+      local.waiveAdminFee = !local.waiveAdminFee;
+      update();
+      toast(local.waiveAdminFee ? "Biaya admin dihapus (Bebas Biaya Admin)." : "Biaya admin normal diaktifkan.", "info");
+      return;
+    }
+
     if (event.target.closest("#payBtn")) {
       if (!canPay() || local.paying) return;
       local.paying = true;
@@ -525,6 +549,7 @@ export async function renderMenu(container, categoryId = "pln") {
           customerId: local.customerId,
           customerName: local.customerName.trim() || (local.inquiry ? local.inquiry.customerName : null),
           customAmount: local.customAmount !== null ? local.customAmount : null,
+          waiveAdminFee: Boolean(local.waiveAdminFee),
           customerPhone: local.customerPhone || (/^(08|628)\d{7,12}$/.test(local.customerId) ? local.customerId : null),
           paymentMethod: local.method,
         });
@@ -555,7 +580,8 @@ export async function renderMenu(container, categoryId = "pln") {
         local.customAmount = val;
         const product = local.type.products.find((p) => p.id === local.productId);
         const baseAmount = local.type.kind === "postpaid" ? (local.inquiry?.amount ?? 0) : (product?.price ?? 0);
-        const adminFee = local.type.kind === "postpaid" ? (local.inquiry?.adminFee ?? product?.adminFee ?? 0) : (product?.adminFee ?? 0);
+        const rawAdminFee = local.type.kind === "postpaid" ? (local.inquiry?.adminFee ?? product?.adminFee ?? 0) : (product?.adminFee ?? 0);
+        const adminFee = local.waiveAdminFee ? 0 : rawAdminFee;
         const total = val + adminFee;
         const totalEl = summaryBody.querySelector(".summary-total strong");
         if (totalEl) totalEl.textContent = rp(total);

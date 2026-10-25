@@ -8,6 +8,7 @@ import {
   verifyPassword,
 } from "./db.js";
 import { getPublicSettings } from "./settings.js";
+import { saveCloudRecord } from "./firebase.js";
 
 export const COOKIE_NAME = "pg_session";
 const SESSION_TTL_MS = 1000 * 60 * 60 * 12;
@@ -114,11 +115,14 @@ export function changePassword(req, res) {
     return res.status(400).json({ error: "Kata sandi lama tidak sesuai." });
   }
 
+  const newHash = hashPassword(String(newPassword));
+  const updatedAt = new Date().toISOString();
   db.prepare("UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?").run(
-    hashPassword(String(newPassword)),
-    new Date().toISOString(),
+    newHash,
+    updatedAt,
     user.id,
   );
+  saveCloudRecord("users", user.username, { password_hash: newHash, updated_at: updatedAt });
   destroyUserSessions(user.username, req.user.token);
   return res.json({ ok: true, message: "Kata sandi berhasil diperbarui." });
 }

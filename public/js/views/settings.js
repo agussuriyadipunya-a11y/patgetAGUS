@@ -2,6 +2,7 @@ import { api } from "../api.js";
 import { icon } from "../icons.js";
 import { ACCENT_LIST, applyTheme, state, updateSettings } from "../store.js";
 import { confirmDialog, escapeHtml, setLoading, toast } from "../ui.js";
+import { triggerCloudSync } from "../firebase.js";
 
 const ACCENT_COLORS = {
   indigo: "#4f46e5",
@@ -230,6 +231,25 @@ export async function renderSettings(container) {
         <p class="form-section-desc">Pilihan untuk mereset riwayat transaksi, menghapus seluruh data operasional, atau mengembalikan ke pengaturan awal pabrik.</p>
 
         <div class="maintenance-grid" style="display:grid;gap:16px;margin-top:16px">
+          <!-- 0. Cloud Sync Online -->
+          <div class="card" style="padding:18px;border:1px solid var(--border);border-left:4px solid var(--success);background:var(--surface)">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
+              <div style="flex:1;min-width:260px">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                  <strong style="font-size:0.95rem">Penyimpanan Online Cloud (Firebase)</strong>
+                  <span class="badge badge-success">Online Aktif &amp; Terhubung</span>
+                </div>
+                <p style="font-size:0.82rem;color:var(--muted);margin-bottom:6px;line-height:1.4">
+                  Data transaksi, data pelanggan, belanja kantor, dan gudang disinkronkan secara realtime ke cloud. Anda dapat mengakses data dari perangkat mana saja (smartphone, tablet, laptop) selagi login dengan akun admin Anda, dan data tidak akan hilang saat aplikasi ditutup.
+                </p>
+                <small style="color:var(--muted-2);font-size:0.74rem">Firebase Realtime Database: <code>paygateagus</code></small>
+              </div>
+              <button type="button" class="btn btn-primary" id="btnSyncCloud" style="white-space:nowrap">
+                ${icon("sparkles", 16)} Sinkronkan Sekarang
+              </button>
+            </div>
+          </div>
+
           <!-- 1. Reset Database (7 Hari) -->
           <div class="card" style="padding:18px;border:1px solid var(--border);border-left:4px solid var(--warning);background:var(--surface)">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
@@ -455,9 +475,22 @@ export async function renderSettings(container) {
   }
 
   function bindDatabase() {
+    const btnSync = content.querySelector("#btnSyncCloud");
     const btnReset = content.querySelector("#btnResetDatabase");
     const btnDelete = content.querySelector("#btnDeleteAllData");
     const btnRestore = content.querySelector("#btnRestoreDefaults");
+
+    btnSync?.addEventListener("click", async () => {
+      setLoading(btnSync, true, "Menyinkronkan…");
+      try {
+        const res = await triggerCloudSync();
+        toast(res.message || "Data berhasil disinkronkan ke Firebase Cloud.", "success");
+      } catch (err) {
+        toast(err.message || "Gagal sinkronisasi data ke cloud.", "error");
+      } finally {
+        setLoading(btnSync, false);
+      }
+    });
 
     btnReset?.addEventListener("click", async () => {
       const ok = await confirmDialog({

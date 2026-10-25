@@ -1,6 +1,7 @@
 import { db } from "./db.js";
 import { AppError } from "./transactions.js";
 import { businessDate, nowIso, randomRef } from "./util.js";
+import { saveCloudRecord, deleteCloudRecord } from "./firebase.js";
 
 // ==================== GUDANG / BARANG KANTOR ====================
 
@@ -70,7 +71,9 @@ export function createOfficeItem(input = {}) {
     )
     .run(code, name, category, unit, price, stock, minStock, notes, now, now);
 
-  return getOfficeItemById(Number(info.lastInsertRowid));
+  const item = getOfficeItemById(Number(info.lastInsertRowid));
+  if (item) saveCloudRecord("office_items", item.id, item);
+  return item;
 }
 
 export function updateOfficeItem(id, input = {}) {
@@ -102,12 +105,15 @@ export function updateOfficeItem(id, input = {}) {
      WHERE id = ?`,
   ).run(code, name, category, unit, price, stock, minStock, notes, now, id);
 
-  return getOfficeItemById(id);
+  const updated = getOfficeItemById(id);
+  if (updated) saveCloudRecord("office_items", updated.id, updated);
+  return updated;
 }
 
 export function deleteOfficeItem(id) {
   getOfficeItemById(id);
   db.prepare("DELETE FROM office_items WHERE id = ?").run(id);
+  deleteCloudRecord("office_items", id);
   return { ok: true, message: "Barang kantor berhasil dihapus." };
 }
 
@@ -269,12 +275,15 @@ export function createOfficeExpense(input = {}) {
       now,
     );
 
-  return getOfficeExpenseById(Number(info.lastInsertRowid));
+  const exp = getOfficeExpenseById(Number(info.lastInsertRowid));
+  if (exp) saveCloudRecord("office_expenses", exp.ref, exp);
+  return exp;
 }
 
 export function deleteOfficeExpense(id) {
-  getOfficeExpenseById(id);
+  const existing = getOfficeExpenseById(id);
   db.prepare("DELETE FROM office_expenses WHERE id = ?").run(id);
+  if (existing?.ref) deleteCloudRecord("office_expenses", existing.ref);
   return { ok: true, message: "Transaksi belanja berhasil dihapus." };
 }
 

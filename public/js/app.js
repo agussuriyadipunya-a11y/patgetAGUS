@@ -18,7 +18,7 @@ import { renderWhatsapp } from "./views/whatsapp.js";
 import { renderCustomers } from "./views/customers.js";
 import { renderExpenses } from "./views/expenses.js";
 import { renderInventory } from "./views/inventory.js";
-import { getCloudStatus } from "./firebase.js";
+import { getCloudStatus, triggerCloudSync } from "./firebase.js";
 
 const appRoot = document.getElementById("app");
 
@@ -287,6 +287,20 @@ function buildShell() {
   appRoot.querySelector("#waPill").addEventListener("click", () => {
     if (location.hash === "#/whatsapp") renderRoute();
     else location.hash = "#/whatsapp";
+  });
+  appRoot.querySelector("#fbSyncPill")?.addEventListener("click", async () => {
+    const pill = document.getElementById("fbSyncPill");
+    toast("Menyinkronkan data dengan Firebase Cloud...", "info");
+    try {
+      const res = await triggerCloudSync();
+      toast(res.message || "Data berhasil disinkronkan ke Cloud Firebase.", "success");
+      if (pill) {
+        pill.className = "firebase-pill active";
+        pill.title = "Data Online Aktif & Tersinkronisasi";
+      }
+    } catch (err) {
+      toast(err.message || "Gagal sinkronisasi ke cloud.", "error");
+    }
   });
 }
 

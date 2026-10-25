@@ -1,5 +1,6 @@
 import { db } from "./db.js";
 import { clamp } from "./util.js";
+import { saveCloudRecord } from "./firebase.js";
 
 export const DEFAULT_SETTINGS = {
   kioskName: "Nusantara Payment",
@@ -77,6 +78,7 @@ export function saveSettings(patch) {
   for (const [key, value] of Object.entries(next)) {
     if (key in DEFAULT_SETTINGS) setSetting(key, value);
   }
+  saveCloudRecord("settings", "app", next);
   return next;
 }
 

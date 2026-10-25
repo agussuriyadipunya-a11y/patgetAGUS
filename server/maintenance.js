@@ -4,6 +4,7 @@ import { seedDemoTransactions } from "./seed.js";
 import { seedDefaultCustomers } from "./customers.js";
 import { seedOfficeData } from "./office.js";
 import { businessDate } from "./util.js";
+import { syncAllToCloud, rtdbRest } from "./firebase.js";
 
 /**
  * 1. Reset Database:
@@ -28,6 +29,7 @@ export function resetDatabase({ days = 7 } = {}) {
     .run(cutoffDate, `${cutoffDate}T00:00:00`);
 
   const remainingTrx = db.prepare("SELECT COUNT(*) AS n FROM transactions").get().n;
+  syncAllToCloud().catch(() => {});
 
   return {
     ok: true,
@@ -57,6 +59,8 @@ export function deleteAllData() {
   try {
     db.prepare("DELETE FROM sqlite_sequence WHERE name IN ('transactions', 'customers', 'office_expenses', 'office_items')").run();
   } catch {}
+
+  syncAllToCloud().catch(() => {});
 
   return {
     ok: true,
@@ -108,6 +112,8 @@ export function restoreFactoryDefaults() {
       admin.id,
     );
   }
+
+  syncAllToCloud().catch(() => {});
 
   return {
     ok: true,

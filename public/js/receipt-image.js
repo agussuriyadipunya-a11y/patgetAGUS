@@ -166,7 +166,8 @@ function drawReceipt(ctx, trx, settings, qrImage) {
     }
   }
 
-  kv("Biaya Admin", rp(trx.adminFee));
+  const isFreeAdmin = !trx.adminFee || trx.adminFee === 0;
+  kv("Biaya Admin", isFreeAdmin ? "Rp 0 (BEBAS ADMIN)" : rp(trx.adminFee), { bold: isFreeAdmin });
   y += 4;
 
   const totalH = 54;
@@ -295,7 +296,7 @@ export async function buildReceiptCanvas(trx, settings = state.settings, qrDataU
   probeCtx.scale(SCALE, SCALE);
   const endY = drawReceipt(probeCtx, trx, settings, qrImage);
 
-  const height = Math.max(Math.ceil(endY + 30), 600);
+  const height = Math.max(Math.ceil(endY + 45), 620);
   const canvas = document.createElement("canvas");
   canvas.width = WIDTH * SCALE;
   canvas.height = height * SCALE;

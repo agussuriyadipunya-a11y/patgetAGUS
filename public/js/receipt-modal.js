@@ -44,7 +44,10 @@ function paperHtml(trx, qrDataUrl) {
       </div>
       <div class="paper-dashed"></div>
       <div class="paper-items">${items}</div>
-      <div class="paper-row" style="margin-top:6px"><span>Biaya admin</span><b>${rp(trx.adminFee)}</b></div>
+      <div class="paper-row" style="margin-top:6px">
+        <span>Biaya admin</span>
+        <b>${(!trx.adminFee || trx.adminFee === 0) ? '<span class="paper-badge-free">Rp 0 (BEBAS ADMIN)</span>' : rp(trx.adminFee)}</b>
+      </div>
       <div class="paper-total"><span>TOTAL PEMBAYARAN</span><strong>${rp(trx.total)}</strong></div>
       <div class="paper-row" style="margin-top:8px"><span>Metode bayar</span><b>${trx.paymentMethod === "qris" ? "QRIS" : trx.paymentMethod === "transfer" ? "Transfer Bank" : "Tunai"}</b></div>
       ${trx.token || trx.serial ? `
@@ -134,8 +137,11 @@ export async function showReceipt(trx, { qrDataUrl = "", onNew = null } = {}) {
       });
 
       card.querySelector('[data-action="print"]').addEventListener("click", () => {
-        const win = window.open(`/api/transactions/${encodeURIComponent(trx.ref)}/receipt.pdf`, "_blank");
-        if (!win) toast("Izinkan pop-up untuk mencetak resi.", "warning");
+        const pdfUrl = `/api/transactions/${encodeURIComponent(trx.ref)}/receipt.pdf`;
+        const win = window.open(pdfUrl, "_blank");
+        if (!win) {
+          window.print();
+        }
       });
     },
   });

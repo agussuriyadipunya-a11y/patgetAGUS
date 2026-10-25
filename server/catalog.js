@@ -353,7 +353,7 @@ function dueDate(days = 10) {
  * Semua data dihasilkan deterministik dari ID pelanggan sehingga hasil
  * pengecekan dan pembayaran selalu konsisten.
  */
-export function runInquiry({ categoryId, typeId, productId, customerId, customerName: customName, customAmount, amount: inputAmount }) {
+export function runInquiry({ categoryId, typeId, productId, customerId, customerName: customName, customAmount, amount: inputAmount, waiveAdminFee, adminFee: inputAdminFee }) {
   const category = findCategory(categoryId);
   const type = findType(categoryId, typeId);
   if (!category || !type) {
@@ -450,7 +450,10 @@ export function runInquiry({ categoryId, typeId, productId, customerId, customer
     }
   }
 
-  const adminFee = product.adminFee || 0;
+  let adminFee = product.adminFee || 0;
+  if (waiveAdminFee === true || waiveAdminFee === "true" || inputAdminFee === 0 || inputAdminFee === "0") {
+    adminFee = 0;
+  }
   return {
     ok: true,
     categoryId,
@@ -472,7 +475,7 @@ export function runInquiry({ categoryId, typeId, productId, customerId, customer
 }
 
 /** Susun order prabayar (harga produk dihitung di server). */
-export function buildPrepaidOrder({ categoryId, typeId, productId, customerId, customerName: customName, customAmount, amount: inputAmount }) {
+export function buildPrepaidOrder({ categoryId, typeId, productId, customerId, customerName: customName, customAmount, amount: inputAmount, waiveAdminFee, adminFee: inputAdminFee }) {
   const category = findCategory(categoryId);
   const type = findType(categoryId, typeId);
   if (!category || !type) return { ok: false, message: "Produk tidak ditemukan." };
@@ -510,6 +513,11 @@ export function buildPrepaidOrder({ categoryId, typeId, productId, customerId, c
     meta.push({ label: "Estimasi kWh", value: product.desc?.replace("± ", "") || "-" });
   }
 
+  let adminFee = product.adminFee || 0;
+  if (waiveAdminFee === true || waiveAdminFee === "true" || inputAdminFee === 0 || inputAdminFee === "0") {
+    adminFee = 0;
+  }
+
   const result = {
     ok: true,
     categoryId,
@@ -522,8 +530,8 @@ export function buildPrepaidOrder({ categoryId, typeId, productId, customerId, c
     customerId: value,
     customerName: finalCustomerName,
     amount: finalPrice,
-    adminFee: product.adminFee || 0,
-    total: finalPrice + (product.adminFee || 0),
+    adminFee,
+    total: finalPrice + adminFee,
     items,
     meta,
     period: monthName(),

@@ -43,7 +43,7 @@ import {
   seedOfficeData,
 } from "./office.js";
 import { resetDatabase, deleteAllData, restoreFactoryDefaults } from "./maintenance.js";
-import { checkFirebaseStatus, syncToFirebase, broadcastCloudEvent } from "./firebase.js";
+import { checkFirebaseStatus, syncToFirebase, broadcastCloudEvent, hydrateDatabase } from "./firebase.js";
 
 ensureDefaultSettings();
 
@@ -59,6 +59,16 @@ app.use((req, res, next) => {
     "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self'; font-src 'self' data:; base-uri 'self'; form-action 'self'",
   );
   next();
+});
+
+// Otomatis sinkronisasi data online dari Firebase Cloud
+hydrateDatabase().catch(() => {});
+app.use((req, res, next) => {
+  if (req.path.startsWith("/api/")) {
+    hydrateDatabase().catch(() => {}).finally(() => next());
+  } else {
+    next();
+  }
 });
 
 const asyncRoute = (handler) => (req, res, next) => {
@@ -132,8 +142,8 @@ api.get("/catalog", (req, res) => {
 });
 
 api.post("/inquiry", (req, res) => {
-  const { categoryId, typeId, productId, customerId, customerName, customAmount, amount } = req.body || {};
-  const result = runInquiry({ categoryId, typeId, productId, customerId, customerName, customAmount, amount });
+  const { categoryId, typeId, productId, customerId, customerName, customAmount, amount, waiveAdminFee, adminFee } = req.body || {};
+  const result = runInquiry({ categoryId, typeId, productId, customerId, customerName, customAmount, amount, waiveAdminFee, adminFee });
   if (!result.ok) throw new AppError(400, result.message);
   res.json(result);
 });
