@@ -10,7 +10,7 @@
     "dev": "node --watch server/index.js"
   },
   "engines": {
-    "node": "22.x"
+    "node": "24.x"
   },
   "dependencies": {
     "@whiskeysockets/baileys": "6.7.24",
