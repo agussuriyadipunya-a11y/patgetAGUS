@@ -82,12 +82,10 @@ function bootScreen(text = "Menyiapkan kios pembayaran…") {
   return `
     <div class="boot-screen">
       <div class="boot-logo">
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5Z" fill="currentColor" />
-        </svg>
+        <img src="/assets/logo.png" alt="PAYGET INDONESIA" />
       </div>
       <div class="boot-text">
-        <strong>PAYMENT GATEWAY</strong>
+        <strong>PAYGET INDONESIA</strong>
         <span>${escapeHtml(text)}</span>
       </div>
       <div class="boot-bar"><i></i></div>
@@ -193,12 +191,10 @@ function buildShell() {
         <div class="sidebar-brand">
           <div class="brand">
             <div class="brand-mark">
-              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5Z" fill="currentColor" />
-              </svg>
+              <img src="/assets/logo.png" alt="PAYGET INDONESIA" />
             </div>
             <div>
-              <div class="brand-name" id="brandName">Payment Gateway</div>
+              <div class="brand-name" id="brandName">PAYGET INDONESIA</div>
               <div class="brand-sub" id="brandSub">Kios Pembayaran</div>
             </div>
           </div>

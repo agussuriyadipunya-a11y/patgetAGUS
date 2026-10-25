@@ -127,17 +127,18 @@ svg { flex: none; }
 }
 
 .boot-logo {
-  width: 64px;
-  height: 64px;
+  width: 72px;
+  height: 72px;
   border-radius: 20px;
   display: grid;
   place-items: center;
-  color: #fff;
-  background: linear-gradient(135deg, #6366f1, #4338ca);
-  box-shadow: 0 20px 40px -18px rgba(79, 70, 229, 0.8);
+  overflow: hidden;
+  background: transparent;
+  box-shadow: 0 14px 34px -12px rgba(37, 99, 235, 0.7);
   animation: bootPulse 1.8s ease-in-out infinite;
 }
 
+.boot-logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .boot-logo svg { width: 32px; height: 32px; }
 .boot-text { text-align: center; display: grid; gap: 4px; }
 .boot-text strong { font-size: 0.8rem; letter-spacing: 0.2em; color: var(--muted); }
@@ -302,7 +303,18 @@ svg { flex: none; }
 .eyebrow { display: inline-block; margin-bottom: 8px; font-size: 0.65rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: var(--primary); }
 
 .brand { display: flex; align-items: center; gap: 11px; }
-.brand-mark { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; flex: none; color: #fff; background: linear-gradient(135deg, #6366f1, #4338ca); box-shadow: 0 8px 22px -10px rgba(99, 102, 241, 0.9); }
+.brand-mark {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  overflow: hidden;
+  background: transparent;
+  box-shadow: 0 6px 18px -6px rgba(37, 99, 235, 0.6);
+}
+.brand-mark img { width: 100%; height: 100%; object-fit: contain; display: block; }
 .brand-mark svg { width: 22px; height: 22px; }
 .brand-name { font-size: 0.98rem; font-weight: 800; letter-spacing: -0.02em; color: #fff; line-height: 1.2; }
 .brand-sub { margin-top: 2px; font-size: 0.65rem; color: #64748b; line-height: 1.3; }

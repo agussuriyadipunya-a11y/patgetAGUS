@@ -93,7 +93,7 @@ export async function renderSettings(container) {
           <div class="preview-kiosk">
             <div class="brand">
               <div class="brand-mark">
-                <svg viewBox="0 0 24 24" fill="none"><path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5Z" fill="currentColor"/></svg>
+                <img src="/assets/logo.png" alt="PAYGET INDONESIA" />
               </div>
               <div>
                 <div class="brand-name" id="previewName">${escapeHtml(settings.kioskName)}</div>

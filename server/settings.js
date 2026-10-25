@@ -3,11 +3,11 @@ import { clamp } from "./util.js";
 import { saveCloudRecord } from "./firebase.js";
 
 export const DEFAULT_SETTINGS = {
-  kioskName: "Nusantara Payment",
+  kioskName: "Payget Indonesia",
   kioskTagline: "Kios Pembayaran Tagihan & Pulsa",
   kioskAddress: "Jl. Merdeka No. 88, Bandung, Jawa Barat",
   kioskPhone: "0812-3456-7890",
-  kioskEmail: "cs@nusantarapayment.id",
+  kioskEmail: "cs@payget.id",
   receiptFooter: "Simpan struk ini sebagai bukti pembayaran yang sah.",
   theme: "light",
   accent: "indigo",
