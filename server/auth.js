@@ -11,7 +11,7 @@ import { getPublicSettings } from "./settings.js";
 import { saveCloudRecord } from "./firebase.js";
 
 export const COOKIE_NAME = "pg_session";
-const SESSION_TTL_MS = 1000 * 60 * 60 * 12;
+const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 hari persisten agar tidak logout saat browser ditutup
 
 const attempts = new Map();
 
@@ -28,6 +28,10 @@ export function parseCookies(header = "") {
 }
 
 export function getTokenFromRequest(req) {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    return authHeader.slice(7).trim();
+  }
   return parseCookies(req.headers.cookie)[COOKIE_NAME] || null;
 }
 
@@ -86,6 +90,7 @@ export function login(req, res) {
   const token = createSession(user.username, SESSION_TTL_MS);
   setSessionCookie(res, token);
   return res.json({
+    token,
     user: { username: user.username },
     settings: getPublicSettings(),
   });

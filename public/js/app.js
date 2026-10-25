@@ -1,4 +1,4 @@
-import { api } from "./api.js";
+import { api, clearSavedToken } from "./api.js";
 import { icon } from "./icons.js";
 import { applyTheme, loadCatalog, state } from "./store.js";
 import {
@@ -460,6 +460,7 @@ async function handleLogout() {
   } catch {
     // sesi mungkin sudah berakhir
   }
+  clearSavedToken();
 
   state.user = null;
   state.categories = [];

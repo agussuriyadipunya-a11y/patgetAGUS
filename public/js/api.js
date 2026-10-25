@@ -6,12 +6,36 @@ export class ApiError extends Error {
   }
 }
 
+export function getSavedToken() {
+  try {
+    return localStorage.getItem("pg_token") || null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveToken(token) {
+  try {
+    if (token) localStorage.setItem("pg_token", token);
+    else localStorage.removeItem("pg_token");
+  } catch {
+    // abaikan error storage
+  }
+}
+
+export function clearSavedToken() {
+  saveToken(null);
+}
+
 async function request(path, { method = "GET", body, headers = {} } = {}) {
+  const token = getSavedToken();
+  const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
   const response = await fetch(`/api${path}`, {
     method,
     credentials: "same-origin",
     headers: {
       Accept: "application/json",
+      ...authHeaders,
       ...(body !== undefined ? { "Content-Type": "application/json" } : {}),
       ...headers,
     },
@@ -25,6 +49,7 @@ async function request(path, { method = "GET", body, headers = {} } = {}) {
   }
 
   if (response.status === 401 && !path.startsWith("/auth/login")) {
+    clearSavedToken();
     window.dispatchEvent(new CustomEvent("auth:expired"));
   }
 

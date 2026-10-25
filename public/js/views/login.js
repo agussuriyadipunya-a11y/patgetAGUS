@@ -1,4 +1,4 @@
-import { api } from "../api.js";
+import { api, saveToken } from "../api.js";
 import { icon } from "../icons.js";
 import { applyTheme, state } from "../store.js";
 import { escapeHtml, setLoading } from "../ui.js";
@@ -130,6 +130,9 @@ export async function renderLogin(container, { message = "", onSuccess } = {}) {
     try {
       const data = await api.post("/auth/login", { username, password: pass });
       setLoading(button, false);
+      if (data.token) {
+        saveToken(data.token);
+      }
       state.user = data.user;
       state.settings = { ...(state.settings || {}), ...data.settings };
       applyTheme(state.settings);

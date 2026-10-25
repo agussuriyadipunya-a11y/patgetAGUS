@@ -102,8 +102,20 @@ function sendFileHeaders(res, contentType, fileName, disposition = "attachment")
 
 // ---------- Public ----------
 app.get("/api/health", (req, res) => {
-  res.json({ ok: true, simulation: SIMULATION_MODE, time: new Date().toISOString() });
+  res.json({ ok: true, simulation: SIMULATION_MODE, status: "active", time: new Date().toISOString() });
 });
+
+app.get("/api/ping", (req, res) => {
+  res.json({ ok: true, status: "alive", time: new Date().toISOString() });
+});
+
+// Keep-alive otomatis untuk cloud host (mencegah sleep saat browser ditutup)
+const keepAliveUrl = process.env.KEEP_ALIVE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null);
+if (keepAliveUrl) {
+  setInterval(() => {
+    fetch(`${keepAliveUrl}/api/ping`).catch(() => {});
+  }, 3 * 60 * 1000).unref();
+}
 
 app.get("/api/public/branding", (req, res) => {
   const s = getPublicSettings();
